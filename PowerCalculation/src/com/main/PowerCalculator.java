@@ -35,11 +35,17 @@ public class PowerCalculator {
 
 			dailyConsumptionMap = htmlUtil.extractValuesFromHtml(htmlBuilder.toString());
 
-			dailyConsumptionMap.entrySet().forEach(entry -> {
+			//This is not removed for academic purpose.
+			/*dailyConsumptionMap.entrySet().forEach(entry -> {
 				System.out.println(
 						"Actual: " + entry.getKey() + ": " + ((PowerConsumptionVO) entry.getValue()).getActualUsage());
 				System.out.println("Forecast: " + entry.getKey() + ": "
 						+ ((PowerConsumptionVO) entry.getValue()).getForecastUsage());
+			});*/
+			
+			dailyConsumptionMap.forEach((key, value) -> {
+				System.out.println("Actual: " + key + ": " + ((PowerConsumptionVO) value).getActualUsage());
+				System.out.println("Forecast: " + key + ": " + ((PowerConsumptionVO) value).getForecastUsage());
 			});
 
 			in.close();
