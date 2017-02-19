@@ -1,0 +1,195 @@
+:project_id: loan-data-rest
+:java_version: 1.8
+
+
+[[initial]]
+== Created a domain object
+
+The domain object is loan.
+
+The `Loan` has a loanAmount and a loanTermMonths. There is also an id object that is configured to be automatically generated so you don't have to deal with that.
+
+== Created a Loan repository
+
+This repository is an interface which allows to perform various operations involving `Loan` objects. It gets these operations by extending the CrudRepository.
+
+At runtime, Spring Data REST will create an implementation of this interface automatically. Then it will use the @RepositoryRestResource annotation to direct Spring MVC to create RESTful endpoints at `/loan`.
+
+Here also defined a custom query to retrieve a list of `Loan` objects based on the loanAmount and the loanTermMonths. We'll see how to invoke it further down in this guide.
+
+== Make the application executable
+
+`src/main/java/com.tanya.loan/Application.java`
+[source,java]
+----
+include::complete/src/main/java/com.tanya.loan/Application.java[]
+----
+Spring Boot automatically spins up Spring Data JPA to create a concrete implementation of the `LoanRepository` and configure it to talk to a back end in-memory database using JPA.
+
+Spring Data REST builds on top of Spring MVC. It creates a collection of Spring MVC controllers, JSON converters, and other beans needed to provide a RESTful front end. These components link up to the Spring Data JPA backend. Using Spring Boot this is all autoconfigured.
+
+Logging output is displayed. The service should be up and running within a few seconds.
+
+
+== Test the application
+
+Now that the application is running, it can be tested. You can use any REST client you wish or it can be tested by using `curl`. The following are some of the `curl` examples.
+
+First you want to see the top level service.
+
+```
+$ curl http://localhost:8080
+{
+  "_links" : {
+    "loan" : {
+      "href" : "http://localhost:8080/loan"
+    },
+    "profile" : {
+      "href" : "http://localhost:8080/profile"
+    }
+  }
+}
+```
+
+Here you get a first glimpse of what this server has to offer. There is a **loan** link located at http://localhost:8080/loan.
+
+NOTE: Spring Data REST uses the http://stateless.co/hal_specification.html[HAL format] for JSON output. It is flexible and offers a convenient way to supply links adjacent to the data that is served.
+
+```
+$ curl http://localhost:8080/loan
+{
+  "_embedded" : {
+    "loan" : [ ]
+  },
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:8080/loan"
+    },
+    "profile" : {
+      "href" : "http://localhost:8080/profile/loan"
+    }
+  }
+}
+```
+
+== CREATE
+There are initially no elements. Time to create a new `Loan`!
+
+```
+$ curl -i -X POST -H "Content-Type:application/json" -d "{  \"loanAmount\" : 100000,  \"loanTermMonths\" : 12 }" http://localhost:8080/loan 
+
+HTTP/1.1 201 
+Location: http://localhost:8080/loan/3
+Content-Type: application/hal+json;charset=UTF-8
+Transfer-Encoding: chunked
+Date: Sun, 19 Feb 2017 22:53:57 GMT
+
+{
+  "loanAmount" : 100000.0,
+  "loanTermMonths" : 12,
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:8080/loan/1"
+    },
+    "loan" : {
+      "href" : "http://localhost:8080/loan/1"
+    }
+  }
+}
+```
+
+== READ
+
+From this you can read for all loan:
+
+```
+$ curl http://localhost:8080/loan
+{
+  "_embedded" : {
+    "loan" : [ {
+      "loanAmount" : 100000.0,
+      "loanTermMonths" : 12,
+      "_links" : {
+        "self" : {
+          "href" : "http://localhost:8080/loan/1"
+        },
+        "loan" : {
+          "href" : "http://localhost:8080/loan/1"
+        }
+      }
+    } ]
+  },
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:8080/loan"
+    },
+    "profile" : {
+      "href" : "http://localhost:8080/profile/loan"
+    }
+  }
+}
+```
+
+You can read directly for the individual record:
+
+```
+$ curl http://localhost:8080/loan/1
+{
+  "loanAmount" : 100000.0,
+  "loanTermMonths" : 12,
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:8080/loan/1"
+    },
+    "loan" : {
+      "href" : "http://localhost:8080/loan/1"
+    }
+  }
+}
+```
+
+NOTE: This might appear to be purely web based, but behind the scenes, there is an H2 relational database.
+
+== UPDATE
+
+From this you can directly update an individual record:
+```
+$ curl -X PUT -H "Content-Type:application/json" -d "{ \"loanAmount\" : 200000,  \"loanTermMonths\" : 36 }" http://localhost:8080/loan/1
+{
+  "loanAmount" : 200000.0,
+  "loanTermMonths" : 36,
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:8080/loan/1"
+    },
+    "loan" : {
+      "href" : "http://localhost:8080/loan/1"
+    }
+  }
+}
+```
+From this you can partially update an individual record:
+```
+$ curl -X PATCH -H "Content-Type:application/json" -d "{ \"loanAmount\": 150000}" http://localhost:8080/loan/1
+{
+  "loanAmount" : 150000.0,
+  "loanTermMonths" : 36,
+  "_links" : {
+    "self" : {
+      "href" : "http://localhost:8080/loan/1"
+    },
+    "loan" : {
+      "href" : "http://localhost:8080/loan/1"
+    }
+  }
+}
+```
+
+== DELETE
+
+From this you can directly delete an individual record:
+$ curl -X DELETE http://localhost:8080/loan/1
+
+
+
+
